@@ -49,23 +49,54 @@ int renvoie_message(int client_socket_fd, char *data)
  */
 int recois_envoie_message(int client_socket_fd, char *data)
 {
-  // Afficher le message reçu
-  printf("Message reçu: %s\n", data);
+    printf("Message reçu: %s\n", data);
 
-  // Demander à l'utilisateur de saisir un nouveau message à envoyer
-  char message[1024];
-  printf("Saisissez un message à renvoyer au client: ");
-  fgets(message, sizeof(message), stdin);
+    char op;
+    int a, b;
+    int resultat;
 
-  // Construit le message à envoyer
-  char response[1024];
-  strcpy(response, "message: ");
-  strcat(response, message);
+    // Extraire l'opération depuis la chaîne reçue
+    if (sscanf(data, "message: %c %d %d", &op, &a, &b) == 3)
+    {
+        switch (op)
+        {
+        case '+':
+            resultat = a + b;
+            break;
+        case '-':
+            resultat = a - b;
+            break;
+        case '*':
+            resultat = a * b;
+            break;
+        case '/':
+            if (b != 0)
+                resultat = a / b;
+            else {
+                printf("Erreur : division par zéro\n");
+                return EXIT_FAILURE;
+            }
+            break;
+        default:
+            printf("Opérateur inconnu: %c\n", op);
+            return EXIT_FAILURE;
+        }
 
-  // Envoyer le message au client
-  return renvoie_message(client_socket_fd, response);
+        // Afficher le résultat sur le terminal serveur
+        printf("Résultat: %d\n", resultat);
+
+        // Facultatif : renvoyer le résultat au client
+        char buffer[128];
+        snprintf(buffer, sizeof(buffer), "Résultat: %d\n", resultat);
+        write(client_socket_fd, buffer, strlen(buffer));
+    }
+    else
+    {
+        printf("Format de message invalide. Format attendu : '+ 25 15'\n");
+    }
+
+    return EXIT_SUCCESS;
 }
-
 /**
  * Gestionnaire de signal pour Ctrl+C (SIGINT).
  * @param signal : Le signal capturé (doit être SIGINT pour Ctrl+C).
